@@ -85,6 +85,9 @@ public class DBConnection {
 		}
 	}
 	
+	/**Check inventory of a product in a store or accross all stores.
+	 * @author Zirui Kuai
+	 */
 	public static void promptB(){
 		System.out.print("Enter the Product ID: ");
 		String pId=sc.nextLine();
