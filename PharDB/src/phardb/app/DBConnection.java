@@ -256,56 +256,76 @@ public class DBConnection {
 			}
 		}
 		
-		String oId=UUID.randomUUID().toString();
-		
-		//Calculate the total price
-		for(Map.Entry<String, Integer> entry:products.entrySet()){
-			String p=entry.getKey();
-			Integer q=entry.getValue();
-			String sql2="select price from product,other_product where product.product_id=other_product.product_id and other_product.product_id='"+p+"'";
-			try{
-				ResultSet rs=stmt.executeQuery(sql2);
-				while(rs.next()){
-					BigDecimal price=rs.getBigDecimal("price");
-					price=price.multiply(new BigDecimal(q));
-					total=total.add(price);
-				}
-				rs.close();
-			}catch(SQLException e){
-				System.out.println("Fail");
-				//e.printStackTrace();
-				//throw new QueryException("Query Exception: "+sql2);
-				return;
+		int count=0;
+		try{
+			ResultSet rs1=stmt.executeQuery("select count(*) from employee where employee_id='"+eId+"' and license_no is null and store_id='"+storeId+"'");
+			while(rs1.next()){
+				count=rs1.getInt(1);
 			}
-		}
-		//System.out.println(total);
-		
-		//Insert into Ordering table
-		String sql="insert into ordering values('"+oId+"',"+total+",now(),'"+storeId+"','"+eId+"')";
-		try {
-			stmt.executeUpdate(sql);
-			System.out.println("Update Ordering table successfully");
-		} catch (SQLException e) {
+			rs1.close();
+		}catch(SQLException e){
 			System.out.println("Fail");
-			//throw new QueryException("Query Exception: "+sql);
-			return;
+			System.err.println("msg: "+e.getMessage()+
+					"code: "+e.getErrorCode()+
+					"state: "+e.getSQLState());
 		}
-		
-		//Insert into Contains table
-		for(Map.Entry<String, Integer> entry:products.entrySet()){
-			String p=entry.getKey();
-			Integer q=entry.getValue();
-			String sql1="insert into contains values ('"+oId+"','"+p+"',"+q+")";
+		if(count==0){
+			System.out.println("No such employee exist in this store");
+			return;
+		}else{
+			String oId=UUID.randomUUID().toString();
+			
+			//Calculate the total price
+			for(Map.Entry<String, Integer> entry:products.entrySet()){
+				String p=entry.getKey();
+				Integer q=entry.getValue();
+				String sql2="select price from product,other_product where product.product_id=other_product.product_id and other_product.product_id='"+p+"'";
+				try{
+					ResultSet rs=stmt.executeQuery(sql2);
+					while(rs.next()){
+						BigDecimal price=rs.getBigDecimal("price");
+						price=price.multiply(new BigDecimal(q));
+						total=total.add(price);
+					}
+					rs.close();
+				}catch(SQLException e){
+					System.out.println("Fail");
+					//e.printStackTrace();
+					//throw new QueryException("Query Exception: "+sql2);
+					return;
+				}
+			}
+			//System.out.println(total);
+			
+			//Insert into Ordering table
+			String sql="insert into ordering values('"+oId+"',"+total+",now(),'"+storeId+"','"+eId+"')";
 			try {
-				stmt.executeUpdate(sql1);
+				stmt.executeUpdate(sql);
+				System.out.println("Update Ordering table successfully");
 			} catch (SQLException e) {
 				System.out.println("Fail");
-				//e.printStackTrace();
-				//throw new QueryException("Query Exception: "+sql1);
+				//throw new QueryException("Query Exception: "+sql);
 				return;
 			}
+			
+			//Insert into Contains table
+			for(Map.Entry<String, Integer> entry:products.entrySet()){
+				String p=entry.getKey();
+				Integer q=entry.getValue();
+				String sql1="insert into contains values ('"+oId+"','"+p+"',"+q+")";
+				try {
+					stmt.executeUpdate(sql1);
+				} catch (SQLException e) {
+					System.out.println("Fail");
+					//e.printStackTrace();
+					//throw new QueryException("Query Exception: "+sql1);
+					return;
+				}
+			}
+			System.out.println("Update Contains table successfully");
 		}
-		System.out.println("Update Contains table successfully");
+		
+		
 		
 		
 	}
