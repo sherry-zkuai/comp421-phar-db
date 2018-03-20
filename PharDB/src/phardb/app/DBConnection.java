@@ -350,6 +350,9 @@ public class DBConnection {
 					System.out.println("Fail");
 					//e.printStackTrace();
 					//throw new QueryException("Query Exception: "+sql1);
+					System.out.println("msg: "+e.getMessage()+
+							"code: "+e.getErrorCode()+
+							"state: "+e.getSQLState());
 					return;
 				}
 			}
