@@ -59,7 +59,7 @@ public class DBConnection {
 	 * @author Zirui Kuai
 	 * @throws QueryException
 	 */
-	public static void promptA() throws QueryException{
+	public static void promptA(){
 		String eName=null;
 		String storeId=null;
 		String pharId=null;
@@ -233,7 +233,7 @@ public class DBConnection {
 	 * @author Zirui Kuai
 	 * @throws QueryException
 	 */
-	public static void promptE() throws QueryException{
+	public static void promptE(){
 		String storeId=null;
 		String eId=null;
 		String prodIn=null;
@@ -406,15 +406,17 @@ public class DBConnection {
 			
 			//psqlClose();
 			
-		}catch(Exception e){
+		}catch(ConnectException e){
 			//e.printStackTrace();
-			System.out.println(e.getMessage());
+			System.out.println("msg: "+e.getMessage());
 			System.exit(0);
 		}finally{
 			try {
 				psqlClose();
-			} catch (Exception e) {
+			} catch (ConnectException e) {
 				//e.printStackTrace();
+				System.out.println("msg: "+e.getMessage());
+				System.exit(0);
 			}
 		}
 
