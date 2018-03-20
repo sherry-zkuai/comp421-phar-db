@@ -314,7 +314,7 @@ public class DBConnection {
 			while(true){
 				System.out.println("Choose one of the following options by type in option letter");
 				System.out.println("A. Add a new employee to a store");
-				System.out.println("B. Check the inventory of a product in a store");
+				System.out.println("B. Check the inventory of a product in a store or across all stores");
 				System.out.println("C. Re-stock a product in a store");
 				System.out.println("D. Dispense drug from a prescription");
 				System.out.println("E. Place an order at a store");
