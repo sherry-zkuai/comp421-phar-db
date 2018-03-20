@@ -59,9 +59,10 @@ public class DBConnection {
 				Scanner sc=new Scanner(System.in);
 				String opt=sc.nextLine();
 				
-				
-				psqlClose();
+				break;
 			}
+			
+			psqlClose();
 			
 		}catch(Exception e){
 			System.out.println(e.getMessage());
