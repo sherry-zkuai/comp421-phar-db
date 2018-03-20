@@ -22,6 +22,11 @@ import phardb.exception.*;
 
  */
 
+/**
+ * 
+ * @author Group 49
+ *
+ */
 
 public class DBConnection {
 	
@@ -113,7 +118,6 @@ public class DBConnection {
 			}
 			rs.close();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			System.out.println("Fail");
 			System.err.println("msg: "+e.getMessage()+
@@ -356,7 +360,6 @@ public class DBConnection {
 			try {
 				psqlClose();
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				//e.printStackTrace();
 			}
 		}
