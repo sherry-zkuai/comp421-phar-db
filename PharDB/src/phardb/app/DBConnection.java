@@ -239,6 +239,7 @@ public class DBConnection {
 		String prodIn=null;
 		HashMap<String,Integer> products=new HashMap<String,Integer>();
 		BigDecimal total=new BigDecimal(0);
+		String memberId=null;
 		
 		System.out.print("Enter the store ID: ");
 		storeId=sc.nextLine();
@@ -258,6 +259,9 @@ public class DBConnection {
 				products.put(pId, quantity);
 			}
 		}
+		
+		System.out.print("Enter the membership no. (if not a member, leave it blank): ");
+		memberId=sc.nextLine();
 		
 		int count=0;
 		try{
@@ -357,6 +361,37 @@ public class DBConnection {
 				}
 			}
 			System.out.println("Update Contains table successfully");
+			
+			if(!memberId.isEmpty()){
+				int mCount=0;
+				try{
+					ResultSet rs3=stmt.executeQuery("select count(*) from member where member_id='"+memberId+"'");
+					while(rs3.next()){
+						mCount=rs3.getInt(1);
+					}
+					rs3.close();
+				}catch (SQLException e){
+					System.out.println("msg: "+e.getMessage()+
+							"code: "+e.getErrorCode()+
+							"state: "+e.getSQLState());
+					return;
+				}
+				if(mCount==0){
+					System.out.println("No such member exists");
+				}else{
+					int points=total.toBigInteger().intValue();
+					//ystem.out.println(points);
+					try {
+						stmt.executeUpdate("insert into gain_points_from values ('"+memberId+"','"+oId+"',"+points+")");
+						System.out.println("Update Member Successfully");
+					} catch (SQLException e) {
+						System.out.println("msg: "+e.getMessage()+
+								"code: "+e.getErrorCode()+
+								"state: "+e.getSQLState());
+						return;
+					}
+				}
+			}
 		}
 		
 		
@@ -394,6 +429,7 @@ public class DBConnection {
 					promptE();
 				}else if(opt.equals("Q")){
 					System.out.println("Successfully quit");
+					psqlClose();
 					System.exit(0);
 					break;
 				}else{
@@ -409,14 +445,14 @@ public class DBConnection {
 		}catch(ConnectException e){
 			//e.printStackTrace();
 			System.out.println("msg: "+e.getMessage());
-			System.exit(0);
+			System.exit(1);
 		}finally{
 			try {
 				psqlClose();
 			} catch (ConnectException e) {
 				//e.printStackTrace();
 				System.out.println("msg: "+e.getMessage());
-				System.exit(0);
+				System.exit(1);
 			}
 		}
 
