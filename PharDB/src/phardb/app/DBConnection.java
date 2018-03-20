@@ -1,11 +1,15 @@
 package phardb.app;
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.util.UUID;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Scanner;
+import java.util.HashMap;
+import java.util.Map;
 
 import phardb.exception.*;
 /*
@@ -77,7 +81,7 @@ public class DBConnection {
 			System.out.println("Success");
 		} catch (SQLException e) {
 			System.out.println("Fail");
-			throw new QueryException("Query Exception: "+sql);
+			//throw new QueryException("Query Exception: "+sql);
 		}
 	}
 	
@@ -90,10 +94,155 @@ public class DBConnection {
 	}
 	
 	public static void promptD(){
+		System.out.print("Store ID: ");
+		String storeId=sc.nextLine();
+		System.out.print("Prescription ID: ");
+		String presId=sc.nextLine();
+		System.out.print("Pharmacist ID: ");
+		String pharId=sc.nextLine();
+		System.out.print("Prescription Drug ID: ");
+		String drugId=sc.nextLine();
+		System.out.print("Drug Amount: ");
+		String amount=sc.nextLine();
+		BigDecimal total=new BigDecimal(0);
 		
+		try{
+			String psql="select price from product,prescription_drug where product.product_id=prescription_drug.product_id and prescription_drug.product_id='"+drugId+"'";
+			ResultSet rs=stmt.executeQuery(psql);
+			while(rs.next()){
+				BigDecimal price=rs.getBigDecimal(1);
+				price=price.multiply(new BigDecimal(amount));
+				total=total.add(price);
+			}
+			rs.close();
+		}catch(SQLException e){
+			System.out.println("Fail");
+			System.err.println("msg: "+e.getMessage()+
+					"code: "+e.getErrorCode()+
+					"state: "+e.getSQLState());
+		}
+		
+		String oId=UUID.randomUUID().toString();
+		String sql1="select count(*) from activeprescription where prescription_id='"+presId+"'";
+		String sql2="insert into ordering values ('"+oId+"',"+total+",now(),'"+storeId+"','"+pharId+"')";
+		String sql3="insert into dispenses values ('"+pharId+"','"+drugId+"','"+presId+"','"+oId+"',now(),"+amount+")";
+		try {
+			int num=0;
+			ResultSet rs=stmt.executeQuery(sql1);
+			while(rs.next()){
+				num=rs.getInt(1);
+			}
+			rs.close();
+			if(num==0){
+				System.out.println("Dispense disallowed since no refill times remain");
+				return;
+			}else{
+				int count=0;
+				ResultSet rs1=stmt.executeQuery("select count(*) from employee where employee_id='"+pharId+"' and not license_no is null and store_id='"+storeId+"'");
+				while(rs1.next()){
+					count=rs1.getInt(1);
+				}
+				rs1.close();
+				if(count==0){
+					System.out.println("No such pharmacist exist in this store");
+					return;
+				}else{
+					stmt.executeUpdate(sql2);
+					System.out.println("Update Ordering successfully");
+					stmt.executeUpdate(sql3);
+					System.out.println("Update Dispenses successfully");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("Fail");
+			e.printStackTrace();
+			System.err.println("msg: "+e.getMessage()+
+					"code: "+e.getErrorCode()+
+					"state: "+e.getSQLState());
+		}
 	}
 	
-	public static void promptE(){
+	/**Place an order at a store. Update on tables Contains and Ordering.
+	 * @author Zirui Kuai
+	 * @throws QueryException
+	 */
+	public static void promptE() throws QueryException{
+		String storeId=null;
+		String eId=null;
+		String prodIn=null;
+		HashMap<String,Integer> products=new HashMap<String,Integer>();
+		BigDecimal total=new BigDecimal(0);
+		
+		System.out.print("Enter the store ID: ");
+		storeId=sc.nextLine();
+		
+		System.out.print("Enter the employee ID: ");
+		eId=sc.nextLine();
+		
+		System.out.println("Entern the product quantity (In the form of product_id,quantity\n for each product; if no more products, enter :q)");
+		while(sc.hasNextLine()){
+			prodIn=sc.nextLine();
+			if(prodIn.equals(":q")){
+				break;
+			}else{
+				String pId=prodIn.split(",")[0];
+				Integer quantity=Integer.parseInt(prodIn.split(",")[1]);
+				//System.out.println(quantity);
+				products.put(pId, quantity);
+			}
+		}
+		
+		String oId=UUID.randomUUID().toString();
+		
+		//Calculate the total price
+		for(Map.Entry<String, Integer> entry:products.entrySet()){
+			String p=entry.getKey();
+			Integer q=entry.getValue();
+			String sql2="select price from product,other_product where product.product_id=other_product.product_id and other_product.product_id='"+p+"'";
+			try{
+				ResultSet rs=stmt.executeQuery(sql2);
+				while(rs.next()){
+					BigDecimal price=rs.getBigDecimal("price");
+					price=price.multiply(new BigDecimal(q));
+					total=total.add(price);
+				}
+				rs.close();
+			}catch(SQLException e){
+				System.out.println("Fail");
+				//e.printStackTrace();
+				//throw new QueryException("Query Exception: "+sql2);
+				return;
+			}
+		}
+		//System.out.println(total);
+		
+		//Insert into Ordering table
+		String sql="insert into ordering values('"+oId+"',"+total+",now(),'"+storeId+"','"+eId+"')";
+		try {
+			stmt.executeUpdate(sql);
+			System.out.println("Update Ordering table successfully");
+		} catch (SQLException e) {
+			System.out.println("Fail");
+			//throw new QueryException("Query Exception: "+sql);
+			return;
+		}
+		
+		//Insert into Contains table
+		for(Map.Entry<String, Integer> entry:products.entrySet()){
+			String p=entry.getKey();
+			Integer q=entry.getValue();
+			String sql1="insert into contains values ('"+oId+"','"+p+"',"+q+")";
+			try {
+				stmt.executeUpdate(sql1);
+			} catch (SQLException e) {
+				System.out.println("Fail");
+				//e.printStackTrace();
+				//throw new QueryException("Query Exception: "+sql1);
+				return;
+			}
+		}
+		System.out.println("Update Contains table successfully");
+		
 		
 	}
 	
@@ -137,12 +286,19 @@ public class DBConnection {
 				
 			}
 			
-			psqlClose();
+			//psqlClose();
 			
 		}catch(Exception e){
 			e.printStackTrace();
 			System.out.println(e.getMessage());
 			System.exit(0);
+		}finally{
+			try {
+				psqlClose();
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 	}
