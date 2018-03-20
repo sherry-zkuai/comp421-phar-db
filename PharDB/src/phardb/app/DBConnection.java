@@ -87,6 +87,9 @@ public class DBConnection {
 		} catch (SQLException e) {
 			System.out.println("Fail");
 			//throw new QueryException("Query Exception: "+sql);
+			System.out.println("msg: "+e.getMessage()+
+					"code: "+e.getErrorCode()+
+					"state: "+e.getSQLState());
 		}
 	}
 	
@@ -104,7 +107,7 @@ public class DBConnection {
 			sql+=" and store_id='"+storeId+"'";
 		}
 		
-		System.out.println("Store			|Product		|Quantity");
+		System.out.println("Store			|Product			|Quantity");
 		System.out.println("------------------------------------------------------------");
 		
 		ResultSet rs;
@@ -120,7 +123,7 @@ public class DBConnection {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.out.println("Fail");
-			System.err.println("msg: "+e.getMessage()+
+			System.out.println("msg: "+e.getMessage()+
 					"code: "+e.getErrorCode()+
 					"state: "+e.getSQLState());
 		}
@@ -148,7 +151,7 @@ public class DBConnection {
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.out.println("Fail");
-			System.err.println("msg: "+e.getMessage()+
+			System.out.println("msg: "+e.getMessage()+
 					"code: "+e.getErrorCode()+
 					"state: "+e.getSQLState());
 		}
@@ -181,7 +184,7 @@ public class DBConnection {
 			rs.close();
 		}catch(SQLException e){
 			System.out.println("Fail");
-			System.err.println("msg: "+e.getMessage()+
+			System.out.println("msg: "+e.getMessage()+
 					"code: "+e.getErrorCode()+
 					"state: "+e.getSQLState());
 		}
@@ -220,7 +223,7 @@ public class DBConnection {
 		} catch (SQLException e) {
 			System.out.println("Fail");
 			e.printStackTrace();
-			System.err.println("msg: "+e.getMessage()+
+			System.out.println("msg: "+e.getMessage()+
 					"code: "+e.getErrorCode()+
 					"state: "+e.getSQLState());
 		}
@@ -265,7 +268,7 @@ public class DBConnection {
 			rs1.close();
 		}catch(SQLException e){
 			System.out.println("Fail");
-			System.err.println("msg: "+e.getMessage()+
+			System.out.println("msg: "+e.getMessage()+
 					"code: "+e.getErrorCode()+
 					"state: "+e.getSQLState());
 		}
@@ -275,11 +278,32 @@ public class DBConnection {
 		}else{
 			String oId=UUID.randomUUID().toString();
 			
-			//Calculate the total price
+			//1.Check if enough inventory
+			//2.Calculate the total price
 			for(Map.Entry<String, Integer> entry:products.entrySet()){
 				String p=entry.getKey();
 				Integer q=entry.getValue();
 				String sql2="select price from product,other_product where product.product_id=other_product.product_id and other_product.product_id='"+p+"'";
+				String sql3="select hquantity from has where store_id='"+storeId+"' and product_id='"+p+"'";
+				try{
+					int hq=0;
+					ResultSet rs2=stmt.executeQuery(sql3);
+					while(rs2.next()){
+						hq=rs2.getInt(1);
+					}
+					rs2.close();
+					if(hq<q){
+						throw new InventoryException("Store "+storeId+" does not have enough inventory for product "+p+".");
+					}
+				}catch(SQLException e){
+					System.out.println("msg: "+e.getMessage()+
+							"code: "+e.getErrorCode()+
+							"state: "+e.getSQLState());
+					return;
+				}catch(InventoryException e){
+					System.out.println(e.getMessage());
+					return;
+				}
 				try{
 					ResultSet rs=stmt.executeQuery(sql2);
 					while(rs.next()){
@@ -292,8 +316,12 @@ public class DBConnection {
 					System.out.println("Fail");
 					//e.printStackTrace();
 					//throw new QueryException("Query Exception: "+sql2);
+					System.out.println("msg: "+e.getMessage()+
+							"code: "+e.getErrorCode()+
+							"state: "+e.getSQLState());
 					return;
 				}
+				
 			}
 			//System.out.println(total);
 			
@@ -305,6 +333,9 @@ public class DBConnection {
 			} catch (SQLException e) {
 				System.out.println("Fail");
 				//throw new QueryException("Query Exception: "+sql);
+				System.out.println("msg: "+e.getMessage()+
+						"code: "+e.getErrorCode()+
+						"state: "+e.getSQLState());
 				return;
 			}
 			
