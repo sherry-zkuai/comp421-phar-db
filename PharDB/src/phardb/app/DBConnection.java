@@ -41,12 +41,12 @@ public class DBConnection {
 		}
 	}
 	
-	public static void psqlClose() throws SQLException{
+	public static void psqlClose() throws ConnectException{
 		try {
 			stmt.close();
 			conn.close();
 		} catch (SQLException e) {
-			throw e;
+			throw new ConnectException("Fail to Close Connection");
 		}
 	}
 	
@@ -86,13 +86,70 @@ public class DBConnection {
 	}
 	
 	public static void promptB(){
+		System.out.print("Enter the Product ID: ");
+		String pId=sc.nextLine();
+		System.out.print("Enter the Store ID (Leave it empty if want to search across all stores): ");
+		String storeId=sc.nextLine();
+		
+		String sql="select * from has where product_id='"+pId+"'";
+		if(!(storeId==null||storeId.equals(""))){
+			sql+=" and store_id='"+storeId+"'";
+		}
+		
+		System.out.println("Store			|Product		|Quantity");
+		System.out.println("------------------------------------------------------------");
+		
+		ResultSet rs;
+		try {
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				String store=rs.getString("store_id");
+				String product=rs.getString("product_id");
+				int quantity=rs.getInt("hquantity");
+				System.out.println(store+"			|"+product+"			|"+quantity);
+			}
+			rs.close();
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			System.out.println("Fail");
+			System.err.println("msg: "+e.getMessage()+
+					"code: "+e.getErrorCode()+
+					"state: "+e.getSQLState());
+		}
 		
 	}
 	
+	/**Re-stock a product at a store; Update on table Restocking
+	 * @author Zirui Kuai
+	 */
 	public static void promptC(){
+		System.out.print("Entern the Store ID: ");
+		String storeId=sc.nextLine();
+		System.out.print("Entern the Product ID: ");
+		String pId=sc.nextLine();
+		System.out.print("Enter the restocked quantity: ");
+		String quantity=sc.nextLine();
+		System.out.print("Enter the stocking price: ");
+		String price=sc.nextLine();
 		
+		String rId=UUID.randomUUID().toString();
+		String sql="insert into restocking values ('"+rId+"',"+price+","+quantity+",now(),'"+storeId+"','"+pId+"')";
+		try {
+			stmt.executeUpdate(sql);
+			System.out.println("Update Restocking successfully");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Fail");
+			System.err.println("msg: "+e.getMessage()+
+					"code: "+e.getErrorCode()+
+					"state: "+e.getSQLState());
+		}
 	}
 	
+	/**Dispense prescription drugs from a prescription at a store. Update on tables Dispenses and Ordering.
+	 * @author Zirui Kuai
+	 */
 	public static void promptD(){
 		System.out.print("Store ID: ");
 		String storeId=sc.nextLine();
@@ -289,15 +346,15 @@ public class DBConnection {
 			//psqlClose();
 			
 		}catch(Exception e){
-			e.printStackTrace();
+			//e.printStackTrace();
 			System.out.println(e.getMessage());
 			System.exit(0);
 		}finally{
 			try {
 				psqlClose();
-			} catch (SQLException e) {
+			} catch (Exception e) {
 				// TODO Auto-generated catch block
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 
