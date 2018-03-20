@@ -25,21 +25,21 @@ public class DBConnection {
 	
 	
 	public static void main(String args[]){
-//		try{
-//			psqlConnect();
-//			
-//			while(true){
-//				System.out.println("Choose one of the following options by type in the words stated in ()");
-//				System.out.println();
-//				
-//				Scanner sc=new Scanner(System.in);
-//				
-//			}
-//			
-//		}catch(Exception e){
-//			System.out.println(e.getMessage());
-//			System.exit(0);
-//		}
+		try{
+			psqlConnect();
+			
+			while(true){
+				System.out.println("Choose one of the following options by type in the words stated in ()");
+				System.out.println();
+				
+				Scanner sc=new Scanner(System.in);
+				
+			}
+			
+		}catch(Exception e){
+			System.out.println(e.getMessage());
+			System.exit(0);
+		}
 		UUID id=UUID.randomUUID();
 		System.out.println(id.toString());
 		
