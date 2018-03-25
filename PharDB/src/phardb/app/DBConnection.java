@@ -39,7 +39,7 @@ public class DBConnection {
 		try{
 			Class.forName("org.postgresql.Driver");
 			conn=DriverManager.getConnection("jdbc:postgresql://comp421.cs.mcgill.ca:5432/cs421", 
-					"username", "password");
+					"cs421g49", "7749-comp421");
 			stmt=conn.createStatement();
 		}catch(Exception e){
 			throw new ConnectException("Fail to Connect to Database: jdbc:postgresql://comp421.cs.mcgill.ca:5432/cs421");
@@ -397,6 +397,42 @@ public class DBConnection {
 	}
 	
 	
+	/**Check prescription records by patient name.
+	 * @author Zhengbo Wang
+	 */
+	public static void promptF(){
+		System.out.print("Enter the patient's name: ");
+		String pName=sc.nextLine();
+		
+		String sql="select * from prescription where patient='"+pName+"'";
+		
+		System.out.println("Prescription ID\t|Doctor\t\t\t|Patient\t\t|Amount\t|Refills Remain\t|Instruction");
+		System.out.println("------------------------------------------------------------");
+		
+		ResultSet rs;
+		try {
+			rs = stmt.executeQuery(sql);
+			while(rs.next()){
+				String prescription_id=rs.getString("prescription_id");
+				String doctor=rs.getString("doctor");
+				String patient=rs.getString("patient");
+				String instruction= rs.getString("instruction");
+				int amount = rs.getInt("amount");
+				int refill_remain  = rs.getInt("refill_remain");
+				System.out.println(prescription_id+"\t\t|"+doctor+"\t\t|"+patient+"\t\t|"+amount+"\t|"+refill_remain+"\t\t|"+instruction);
+			}
+			rs.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Fail");
+			System.out.println("msg: "+e.getMessage()+
+					"code: "+e.getErrorCode()+
+					"state: "+e.getSQLState());
+		}
+		
+	}
+	
+	
 	public static void main(String args[]){
 		try{
 			psqlConnect();
@@ -408,6 +444,7 @@ public class DBConnection {
 				System.out.println("C. Re-stock a product in a store");
 				System.out.println("D. Dispense drug from a prescription");
 				System.out.println("E. Place an order at a store");
+				System.out.println("F. Check prescription records by patient name");
 				System.out.println("Q. Quit");
 				
 				
@@ -424,6 +461,8 @@ public class DBConnection {
 					promptD();
 				}else if(opt.equals("E")){
 					promptE();
+				}else if(opt.equals("F")){
+					promptF();
 				}else if(opt.equals("Q")){
 					System.out.println("Successfully quit");
 					psqlClose();
