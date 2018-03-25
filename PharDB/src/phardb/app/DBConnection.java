@@ -39,7 +39,7 @@ public class DBConnection {
 		try{
 			Class.forName("org.postgresql.Driver");
 			conn=DriverManager.getConnection("jdbc:postgresql://comp421.cs.mcgill.ca:5432/cs421", 
-					"cs421g49", "7749-comp421");
+					"username", "password");
 			stmt=conn.createStatement();
 		}catch(Exception e){
 			throw new ConnectException("Fail to Connect to Database: jdbc:postgresql://comp421.cs.mcgill.ca:5432/cs421");
